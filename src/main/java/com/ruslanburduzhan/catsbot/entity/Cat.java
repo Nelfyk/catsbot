@@ -1,0 +1,12 @@
+package com.ruslanburduzhan.catsbot.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Data
+public class Cat {
+    @JsonProperty("url")
+    private String url;
+}
