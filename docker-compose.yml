@@ -1,0 +1,32 @@
+version: "3.7"
+services:
+  api_service:
+    build: .
+    networks:
+      - backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - nelf_mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://nelf_mysql:3306/cats_bot
+  nelf_mysql:
+    image: mysql
+    networks:
+      - backend
+    restart: always
+    ports:
+      - "7777:3306"
+    environment:
+      MYSQL_DATABASE: cats_bot
+      MYSQL_USER: bestuser3
+      MYSQL_PASSWORD: bestuser3
+      MYSQL_ROOT_PASSWORD: bestuser3
+    volumes:
+      - mysql-data:/var/lib/mysql
+volumes:
+  mysql-data:
+networks:
+  backend:
+    name: nelf-network

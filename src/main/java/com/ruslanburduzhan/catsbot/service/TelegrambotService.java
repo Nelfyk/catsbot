@@ -1,10 +1,8 @@
 package com.ruslanburduzhan.catsbot.service;
 
-import com.ruslanburduzhan.catsbot.entity.Filter;
 import com.ruslanburduzhan.catsbot.entity.Telegrambot;
 import com.ruslanburduzhan.catsbot.entity.User;
 import com.ruslanburduzhan.catsbot.repository.UserRepository;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -26,7 +24,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.*;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
 @Service
 public class TelegrambotService extends TelegramLongPollingBot {
 
@@ -48,7 +45,7 @@ public class TelegrambotService extends TelegramLongPollingBot {
 
     private void createCommandList() {
         List<BotCommand> botCommandList = new ArrayList<>();
-//        botCommandList.add(new BotCommand("/start", "Начало работы"));
+        botCommandList.add(new BotCommand("/start", "Начало работы"));
         botCommandList.add(new BotCommand("/menu", "Показать меню"));
         try {
             execute(new SetMyCommands(botCommandList, new BotCommandScopeDefault(), null));
@@ -86,6 +83,7 @@ public class TelegrambotService extends TelegramLongPollingBot {
             long chatId = msg.getChatId();
             if (msgText.equals("/start")) {
                 registerUser(msg);
+                sendStartMsg(chatId);
             } else if (msgText.equals("/menu") || msgText.equals(menuMap.get("back"))) {
                 showMenu(chatId);
             } else if (msgText.equals(menuMap.get("settings"))) {
@@ -123,6 +121,15 @@ public class TelegrambotService extends TelegramLongPollingBot {
                 resetCallBackQueryHandler(chatId, msgId, callBackData);
             }
         }
+    }
+
+    private void sendStartMsg(long chatId) {
+        String text =
+                "Кошки. на твоём. экране. бесплатно. \uD83D\uDE3C" +
+                        "\n\nВ настройках можешь выбрать фильтр или написать текст, который будет на фотке/гифке." +
+                        "\nМожно очистить настройки, если введешь что-то не то." +
+                        "\n\nВсе команды находятся в меню \"/menu\"";
+        sendMessage(chatId, text);
     }
 
     private void sendMessage(long chatId, String textToSend) {
@@ -220,22 +227,33 @@ public class TelegrambotService extends TelegramLongPollingBot {
     }
 
     private void chooseResetOptions(long chatId) {
+        User user = userRepository.findById(chatId).get();
+        StringBuilder stringBuilder = new StringBuilder();
+        if (user.getText() == null)
+            stringBuilder.append("Текущий текст не введён.");
+        else
+            stringBuilder.append("Текущий текст - ").append(user.getText());
+        if (user.getFilter() == null)
+            stringBuilder.append("\nТекущий фильтр не выбран.");
+        else
+            stringBuilder.append("\nТекущий фильтр - ").append(user.getFilter());
+        sendMessage(chatId,stringBuilder.toString());
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText("Что нужно сбросить?");
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> rowsInLine = new ArrayList<>();
         List<InlineKeyboardButton> rowInLine = new ArrayList<>();
-        List<InlineKeyboardButton> rowInLine2 = new ArrayList<>();
+//        List<InlineKeyboardButton> rowInLine2 = new ArrayList<>();
         var btn1 = InlineKeyboardButton.builder().text("Текст").callbackData("text").build();
         rowInLine.add(btn1);
         var btn2 = InlineKeyboardButton.builder().text("Фильтр").callbackData("filter").build();
         rowInLine.add(btn2);
         rowsInLine.add(rowInLine);
 
-        var btn3 = InlineKeyboardButton.builder().text("Расписание").callbackData("scheduler").build();
-        rowInLine2.add(btn3);
-        rowsInLine.add(rowInLine2);
+//        var btn3 = InlineKeyboardButton.builder().text("Расписание").callbackData("scheduler").build();
+//        rowInLine2.add(btn3);
+//        rowsInLine.add(rowInLine2);
 
         markup.setKeyboard(rowsInLine);
         message.setReplyMarkup(markup);
@@ -248,10 +266,11 @@ public class TelegrambotService extends TelegramLongPollingBot {
 
     private void chooseFilterOptions(long chatId) {
         String text = userRepository.findById(chatId).get().getFilter();
-        if (text != null)
-            sendMessage(chatId, "Текущий фильтр - " + text);
-        else
+        if (text == null)
             sendMessage(chatId, "Текущий фильтр не выбран.");
+        else
+            sendMessage(chatId, "Текущий фильтр - " + text);
+
         SendMessage message = new SendMessage();
         message.setChatId(chatId);
         message.setText("Выберите фильтр:");
@@ -304,8 +323,8 @@ public class TelegrambotService extends TelegramLongPollingBot {
         row.add(menuMap.get("text"));
         row.add(menuMap.get("filter"));
         keyboardRowList.add(row);
-        row2.add(menuMap.get("scheduler"));
-        keyboardRowList.add(row2);
+//        row2.add(menuMap.get("scheduler"));
+//        keyboardRowList.add(row2);
         row3.add(menuMap.get("reset"));
         keyboardRowList.add(row3);
         row4.add(menuMap.get("back"));
@@ -315,6 +334,7 @@ public class TelegrambotService extends TelegramLongPollingBot {
     }
 
     private void resetCallBackQueryHandler(long chatId, int msgId, String callBackData) {
+
         sendEditeMsg(chatId, msgId, "Что нужно сбросить?");
         User user = userRepository.findById(chatId).get();
         if (callBackData.equals("text")) {
@@ -340,6 +360,9 @@ public class TelegrambotService extends TelegramLongPollingBot {
         sendMessage(chatId, "Выбран фильтр - " + callBackData);
     }
 
-
+    // sec min hour Data(15) Month dayOfTheWeek
+//    @Scheduled(cron = "0 * * * * *", zone = "Asia/Novosibirsk")
+//    private void scheduler() {
+//    }
 
 }
