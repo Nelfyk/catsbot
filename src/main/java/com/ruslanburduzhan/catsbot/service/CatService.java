@@ -22,10 +22,13 @@ public class CatService {
     public File getCatImage(String cmd) {
         if (cmd == null) {
             cmd = "";
-            System.out.println("cmd is null");
         }
+        String urlApi = "https://cataas.com/cat" + cmd;
+        if (cmd.contains("?"))
+            urlApi += "&json=true";
+        else
+            urlApi += "?json=true";
         try {
-            String urlApi = "https://cataas.com/cat" + cmd + "?json=true";
             HttpRequest request = HttpRequest.newBuilder().uri(new URI(urlApi)).build();
             HttpClient client = HttpClient.newHttpClient();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

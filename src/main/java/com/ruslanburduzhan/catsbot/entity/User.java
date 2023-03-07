@@ -13,7 +13,7 @@ public class User {
     private long chatId;
     private Time schedulerTime;
     private String text;
-    private Filter filter;
+    private String filter;
 
     public User() {
 
